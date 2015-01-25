@@ -64,22 +64,66 @@ names(merge_mean_std_table) <- gsub('mean',"Mean",names(merge_mean_std_table))
 names(merge_mean_std_table) <- gsub('std',"StandardDeviation",names(merge_mean_std_table))
 names(merge_mean_std_table) <- gsub('Freq\\.',"Frequency",names(merge_mean_std_table))
 names(merge_mean_std_table) <- gsub('Freq$',"Frequency",names(merge_mean_std_table))
+names(merge_mean_std_table) <- gsub('BodyBody',"Body",names(merge_mean_std_table))
 
 ######################################################################################################
 ## 5. Creates a tidy data set with the average of each variable for each activity and each subject. ##
 ######################################################################################################
 
 tidy_dataset <- ddply(merge_mean_std_table, .(SubjectID,Activity), numcolwise(mean))
-write.table(tidy_dataset, file = "tidy_dataset.txt", row.names=FALSE, col.names=FALSE)
+write.table(tidy_dataset, file = "tidy_dataset.txt", row.names=FALSE)
 
 # (Optional) Write old and new names to markdown file
+# new_names <- names(merge_mean_std_table)
+# old_len <- max(nchar(names(merge_table)))
+# new_len <- max(nchar(new_names))
+# format <- paste("| %-3s | %-",old_len,"s | %-",new_len,"s |", sep="")
+# heading <- sprintf(format,"No.","OLD NAME","NEW NAME")
+# separator <- paste("|:----|:",paste(rep("-",old_len),collapse=""),"-|:",paste(rep("-",new_len),collapse=""),"-|", sep="")
+# body <- sprintf(format,seq(1,length(old_names)),old_names,new_names)
+# excludednames <- names(merge_table[,!selectednames])
+# body2 <- sprintf(format,seq(length(old_names)+1,length(old_names)+length(excludednames)),excludednames,rep("----------NOT SELECTED----------",length(excludednames)))
+# write(c(heading,separator,body,body2),file="names.md")
+
+# (Optional) Write old names, new names and description to markdown file names.md
+# Will be copied manually to the CodeBook.md to describe each variable in the tidy data set
+
 new_names <- names(merge_mean_std_table)
+desc_names <- new_names
+prefix <- rep("",length(new_names))
+suffix <- rep("",length(new_names))
+prefix[grepl("Mean",desc_names)] = "The mean of the "
+desc_names <- gsub("Mean","",desc_names)
+prefix[grepl("StandardDeviation",desc_names)] = "The standard deviation of the "
+desc_names <- gsub("StandardDeviation","",desc_names)
+suffix[grepl("X",desc_names)] = "along the X-axis "
+desc_names <- gsub("X","",desc_names)
+suffix[grepl("Y",desc_names)] = "along the Y-axis "
+desc_names <- gsub("Y","",desc_names)
+suffix[grepl("Z",desc_names)] = "along the Z-axis "
+desc_names <- gsub("Z","",desc_names)
+selected <- grepl("TimeDomain",desc_names)
+suffix[selected] = paste(suffix[selected],"in the time domain ", sep="")
+desc_names <- gsub("TimeDomain","",desc_names)
+selected <- grepl("FrequencyDomain",desc_names)
+suffix[selected] = paste(suffix[selected],"in the frequency domain ", sep="")
+desc_names <- gsub("FrequencyDomain","",desc_names)
+desc_names <- paste(prefix,desc_names,suffix)
+desc_names <- gsub('Activity',"the activity performed by the person. WALKING, WALKING_UPSTAIRS, WALKING_DOWNSTAIRS, SITTING, STANDING, LAYING",desc_names)
+desc_names <- gsub('SubjectID',"the subject ID of the person performing the task: 1 to 30",desc_names)
+desc_names <- gsub("Body","body ",desc_names)
+desc_names <- gsub("Acceleration","acceleration ",desc_names)
+desc_names <- gsub("Gravity","gravity ",desc_names)
+desc_names <- gsub("Jerk","jerk ",desc_names)
+desc_names <- gsub("Angular","angular ",desc_names)
+desc_names <- gsub("Speed","speed ",desc_names)
+desc_names <- gsub("Magnitude","magnitude ",desc_names)
 old_len <- max(nchar(names(merge_table)))
 new_len <- max(nchar(new_names))
-format <- paste("| %-3s | %-",old_len,"s | %-",new_len,"s |", sep="")
-heading <- sprintf(format,"No.","OLD NAME","NEW NAME")
-separator <- paste("|:----|:",paste(rep("-",old_len),collapse=""),"-|:",paste(rep("-",new_len),collapse=""),"-|", sep="")
-body <- sprintf(format,seq(1,length(old_names)),old_names,new_names)
+format <- paste("| %-3s | %-",old_len,"s | %-",new_len,"s | %s |", sep="")
+heading <- sprintf(format,"No.","OLD NAME","NEW NAME", "DESCRIPTION")
+separator <- paste("|:----|:",paste(rep("-",old_len),collapse=""),"-|:",paste(rep("-",new_len),collapse=""),"-|:-------------|", sep="")
+body <- sprintf(format,seq(1,length(old_names)),old_names,new_names,desc_names)
 excludednames <- names(merge_table[,!selectednames])
-body2 <- sprintf(format,seq(length(old_names)+1,length(old_names)+length(excludednames)),excludednames,rep("----------NOT SELECTED----------",length(excludednames)))
+body2 <- sprintf(format,seq(length(old_names)+1,length(old_names)+length(excludednames)),excludednames,rep("----------NOT SELECTED----------",length(excludednames)),"|--------------|")
 write(c(heading,separator,body,body2),file="names.md")
